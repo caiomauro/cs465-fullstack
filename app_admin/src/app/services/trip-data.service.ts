@@ -2,22 +2,27 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { Injectable } from '@angular/core';
-import { Trip } from "../models/trip";
+import { AuthResponse } from '../models/authresponse';
+import { Trip } from '../models/trip';
+import { User } from '../models/users';
+import { BROWSER_STORAGE } from '../storage';
 
 @Injectable({
-  providedIn: "root"
+  providedIn: 'root',
 })
-
-export class TripDataService { 
-  constructor(private http: HttpClient) {}
+export class TripDataService {
+  constructor(
+    private http: HttpClient,
+    @Inject(BROWSER_STORAGE) private storage: Storage
+  ) {}
 
   url = 'http://localhost:3000/api/trips';
 
-  getTrips(): Observable<Trip[]>{
+  getTrips(): Observable<Trip[]> {
     return this.http.get<Trip[]>(this.url);
   }
 
-  addTrip(formData: Trip) : Observable<Trip> {
+  addTrip(formData: Trip): Observable<Trip> {
     return this.http.post<Trip>(this.url, formData);
   }
 
@@ -25,7 +30,24 @@ export class TripDataService {
     return this.http.get<Trip[]>(this.url + '/' + tripCode);
   }
 
-  updateTrips(formData: Trip): Observable<Trip>{
+  updateTrips(formData: Trip): Observable<Trip> {
     return this.http.put<Trip>(this.url + '/' + formData.code, formData);
+  }
+
+  public login(user: User): Promise<AuthResponse> {
+    return this.makeAuthApiCall('login', user);
+  }
+
+  public register(user: User): Promise<AuthResponse> {
+    return this.makeAuthApiCall('register', user);
+  }
+
+  private makeAuthApiCall(urlPath: string, user: User): Promise<AuthResponse> {
+    const url: string = `${this.apiBaseUrl}/${urlPath}`;
+    return this.http
+      .post(url, user)
+      .toPromise()
+      .then((response) => response.json() as AuthResponse)
+      .catch(this.handleError);
   }
 }
